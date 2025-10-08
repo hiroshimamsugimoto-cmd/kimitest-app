@@ -1,4 +1,3 @@
-最新のコードとして、以下を記憶して。
 
 import streamlit as st
 import openpyxl
