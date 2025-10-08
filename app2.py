@@ -33,7 +33,12 @@ with col3:
 st.subheader("終了日時")
 col4, col5, col6 = st.columns([2, 1, 1])
 with col4:
-    終了日 = st.date_in_
+    終了日 = st.date_input("日付", key="end_date")
+with col5:
+    終了時 = st.text_input("時", value="10", key="end_hour")
+with col6:
+    終了分 = st.text_input("分", value="0", key="end_minute")
+
 
 # --- 測定値入力 ---
 st.subheader("測定値入力")
@@ -146,5 +151,6 @@ if st.button("判定・保存"):
 
         except Exception as e:
             st.error(f"⚠ エラーが発生しました: {e}")
+
 
 
