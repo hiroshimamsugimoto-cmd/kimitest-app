@@ -51,6 +51,17 @@ with col8:
 
 試験実施者 = st.text_input("試験実施者")
 
+# --- 時刻を整数に変換 ---
+try:
+    開始時 = int(開始時)
+    開始分 = int(開始分)
+    終了時 = int(終了時)
+    終了分 = int(終了分)
+except ValueError:
+    st.error("⚠ 時刻の入力は半角数字でお願いします。")
+    st.stop()
+
+
 # --- 数値変換 ---
 def safe_float(v):
     try:
@@ -135,4 +146,5 @@ if st.button("判定・保存"):
 
         except Exception as e:
             st.error(f"⚠ エラーが発生しました: {e}")
+
 
