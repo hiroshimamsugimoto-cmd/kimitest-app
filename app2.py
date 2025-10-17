@@ -25,9 +25,9 @@ col1, col2, col3 = st.columns([2, 1, 1])
 with col1:
     開始日 = st.date_input("日付", key="start_date")
 with col2:
-    開始時 = st.text_input("時", value="9", key="start_hour")
+    開始時 = st.text_input("時", value="", key="start_hour")
 with col3:
-    開始分 = st.text_input("分", value="0", key="start_minute")
+    開始分 = st.text_input("分", value="", key="start_minute")
 
 # --- 終了日時 ---
 st.subheader("終了日時")
@@ -35,10 +35,9 @@ col4, col5, col6 = st.columns([2, 1, 1])
 with col4:
     終了日 = st.date_input("日付", key="end_date")
 with col5:
-    終了時 = st.text_input("時", value="10", key="end_hour")
+    終了時 = st.text_input("時", value="", key="end_hour")
 with col6:
-    終了分 = st.text_input("分", value="0", key="end_minute")
-
+    終了分 = st.text_input("分", value="", key="end_minute")
 
 
 # --- 測定値入力 ---
@@ -56,17 +55,6 @@ with col8:
     T2 = st.text_input("終了温度 (℃)", placeholder="例：19.3")
 
 試験実施者 = st.text_input("試験実施者")
-
-
-# --- 時刻を整数に変換 ---
-try:
-    開始時 = int(開始時)
-    開始分 = int(開始分)
-    終了時 = int(終了時)
-    終了分 = int(終了分)
-except ValueError:
-    st.error("⚠ 時刻の入力は半角数字でお願いします。")
-    st.stop()
 
 
 # --- 数値変換 ---
