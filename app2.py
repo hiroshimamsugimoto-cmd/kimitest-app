@@ -5,7 +5,7 @@ from io import BytesIO
 import base64
 
 # === 設定 ===
-TEMPLATE = "気密試験記録.xlsx"  # 同じフォルダにテンプレートExcelを置く
+TEMPLATE = "気密試験記録2.xlsx"  # 同じフォルダにテンプレートExcelを置く
 
 st.title("📘 気密試験記録 入力フォーム")
 
