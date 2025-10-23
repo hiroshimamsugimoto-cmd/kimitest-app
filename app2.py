@@ -1,4 +1,3 @@
-
 import streamlit as st
 import openpyxl
 from datetime import datetime
@@ -25,9 +24,9 @@ col1, col2, col3 = st.columns([2, 1, 1])
 with col1:
     開始日 = st.date_input("日付", key="start_date")
 with col2:
-    開始時 = st.text_input("時", value="", key="start_hour")
+    開始時 = st.text_input("時", value="", key="start_hour", placeholder="例：9")
 with col3:
-    開始分 = st.text_input("分", value="", key="start_minute")
+    開始分 = st.text_input("分", value="", key="start_minute", placeholder="例：30")
 
 # --- 終了日時 ---
 st.subheader("終了日時")
@@ -35,10 +34,9 @@ col4, col5, col6 = st.columns([2, 1, 1])
 with col4:
     終了日 = st.date_input("日付", key="end_date")
 with col5:
-    終了時 = st.text_input("時", value="", key="end_hour")
+    終了時 = st.text_input("時", value="", key="end_hour", placeholder="例：10")
 with col6:
-    終了分 = st.text_input("分", value="", key="end_minute")
-
+    終了分 = st.text_input("分", value="", key="end_minute", placeholder="例：15")
 
 # --- 測定値入力 ---
 st.subheader("測定値入力")
@@ -56,7 +54,6 @@ with col8:
 
 試験実施者 = st.text_input("試験実施者")
 
-
 # --- 数値変換 ---
 def safe_float(v):
     try:
@@ -73,18 +70,19 @@ T2 = safe_float(T2)
 if st.button("判定・保存"):
     if None in (P1, T1, P2p, T2):
         st.warning("⚠ 圧力・温度のすべてを入力してください。")
+    elif not (開始時 and 開始分 and 終了時 and 終了分):
+        st.warning("⚠ 開始・終了の時刻（時・分）をすべて入力してください。")
     else:
         try:
             # --- 日時生成 ---
-       開始日時 = datetime.combine(
-    開始日,
-    datetime.strptime(f"{int(開始時):02d}:{int(開始分):02d}", "%H:%M").time()
-)
-終了日時 = datetime.combine(
-    終了日,
-    datetime.strptime(f"{int(終了時):02d}:{int(終了分):02d}", "%H:%M").time()
-)
-
+            開始日時 = datetime.combine(
+                開始日,
+                datetime.strptime(f"{int(開始時):02d}:{int(開始分):02d}", "%H:%M").time()
+            )
+            終了日時 = datetime.combine(
+                終了日,
+                datetime.strptime(f"{int(終了時):02d}:{int(終了分):02d}", "%H:%M").time()
+            )
 
             # --- 補正計算 ---
             T1_K = T1 + 273.15
