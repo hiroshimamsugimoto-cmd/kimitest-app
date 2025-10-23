@@ -139,7 +139,7 @@ if st.button("判定・保存"):
             output = BytesIO()
             wb.save(output)
             excel_data = output.getvalue()
-            filename = f"気密試験記録_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+            filename = f"気密試験記録_{datetime.now().strftime('%Y%m%d')}.xlsx"
             b64 = base64.b64encode(excel_data).decode()
             href = f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="{filename}">📥 Excelをダウンロード</a>'
             st.markdown(href, unsafe_allow_html=True)
