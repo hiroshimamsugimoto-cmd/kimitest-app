@@ -76,8 +76,15 @@ if st.button("判定・保存"):
     else:
         try:
             # --- 日時生成 ---
-            開始日時 = datetime.combine(開始日, datetime.strptime(f"{開始時:02d}:{開始分:02d}", "%H:%M").time())
-            終了日時 = datetime.combine(終了日, datetime.strptime(f"{終了時:02d}:{終了分:02d}", "%H:%M").time())
+       開始日時 = datetime.combine(
+    開始日,
+    datetime.strptime(f"{int(開始時):02d}:{int(開始分):02d}", "%H:%M").time()
+)
+終了日時 = datetime.combine(
+    終了日,
+    datetime.strptime(f"{int(終了時):02d}:{int(終了分):02d}", "%H:%M").time()
+)
+
 
             # --- 補正計算 ---
             T1_K = T1 + 273.15
