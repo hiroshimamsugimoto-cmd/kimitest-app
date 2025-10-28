@@ -3,9 +3,15 @@ import openpyxl
 from datetime import datetime
 from io import BytesIO
 import base64
+from decimal import Decimal, ROUND_HALF_UP
 
 # === 設定 ===
 TEMPLATE = "気密試験記録2.xlsx"  # 同じフォルダにテンプレートExcelを置く
+
+# --- ExcelのROUNDと同じ四捨五入（0.5は常に切り上げ）---
+def excel_round(value, digits):
+    q = '1.' + '0' * digits
+    return float(Decimal(str(value)).quantize(Decimal(q), rounding=ROUND_HALF_UP))
 
 st.title("📘 気密試験記録 入力フォーム")
 
@@ -70,35 +76,40 @@ T2 = safe_float(T2)
 if st.button("判定・保存"):
     if None in (P1, T1, P2p, T2):
         st.warning("⚠ 圧力・温度のすべてを入力してください。")
-    elif not (開始時 and 開始分 and 終了時 and 終了分):
-        st.warning("⚠ 開始・終了の時刻（時・分）をすべて入力してください。")
     else:
         try:
-            # --- 日時生成 ---
-            開始日時 = datetime.combine(
-                開始日,
-                datetime.strptime(f"{int(開始時):02d}:{int(開始分):02d}", "%H:%M").time()
-            )
-            終了日時 = datetime.combine(
-                終了日,
-                datetime.strptime(f"{int(終了時):02d}:{int(終了分):02d}", "%H:%M").time()
-            )
+            # --- 日時生成（未入力時は00:00扱い）---
+            try:
+                開始日時 = datetime.combine(
+                    開始日,
+                    datetime.strptime(f"{int(開始時 or 0):02d}:{int(開始分 or 0):02d}", "%H:%M").time()
+                )
+                終了日時 = datetime.combine(
+                    終了日,
+                    datetime.strptime(f"{int(終了時 or 0):02d}:{int(終了分 or 0):02d}", "%H:%M").time()
+                )
+            except:
+                開始日時 = datetime.combine(開始日, datetime.strptime("00:00", "%H:%M").time())
+                終了日時 = datetime.combine(終了日, datetime.strptime("00:00", "%H:%M").time())
 
-            # --- 補正計算 ---
+            # --- 補正後圧力（Excel式と同一）---
             T1_K = T1 + 273.15
             T2_K = T2 + 273.15
-            P2_corr = P2p * (T1_K / T2_K)
-            ΔP = P2_corr - P1
-            判定範囲 = P1 * 0.01  # ±1%
+            P2_corr_raw = ((P1 + 0.1013) * (T2_K / T1_K)) - 0.1013
+            P2_corr = excel_round(P2_corr_raw, 3)
 
+            # --- Excelと同じ丸め処理での判定 ---
+            ΔP_dec = Decimal(str(P1)) - Decimal(str(P2_corr))
+            ΔP = float(Decimal(ΔP_dec).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
+            判定範囲 = float(Decimal(str(P1 * 0.01)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
             合否 = "合格" if abs(ΔP) <= 判定範囲 else "不合格"
             色 = "green" if 合否 == "合格" else "red"
 
             # --- 結果表示 ---
-            st.markdown("## 📊 計算結果（ボイル・シャルルの法則に基づく補正）")
-            st.write(f"- 補正後終了圧力 P2_corr: **{P2_corr:.4f} MPa**")
-            st.write(f"- 圧力変化量 ΔP: **{ΔP:.4f} MPa**")
-            st.write(f"- 判定範囲: ±**{判定範囲:.4f} MPa**")
+            st.markdown("## 📊 計算結果")
+            st.write(f"- 補正後終了圧力 P2_corr: **{P2_corr:.3f} MPa**")
+            st.write(f"- 圧力変化量 ΔP（開始−補正後）: **{ΔP:.3f} MPa**")
+            st.write(f"- 判定範囲: ±**{判定範囲:.3f} MPa**")
             st.markdown(f"### <span style='color:{色};'>判定結果: {合否}</span>", unsafe_allow_html=True)
 
             # --- Excel出力 ---
@@ -114,7 +125,7 @@ if st.button("判定・保存"):
                     c = ws[cell].column
                     ws.cell(row=r, column=c, value=value)
 
-            # 指定位置に書き込み
+            # --- Excel書き込み ---
             write(ws, "D3", 系統名)
             write(ws, "D4", 試験圧力)
             write(ws, "M4", 試験範囲)
@@ -129,13 +140,13 @@ if st.button("判定・保存"):
             write(ws, "C10", f"{T1:.1f}")
             write(ws, "E10", f"{P2p:.4f}")
             write(ws, "G10", f"{T2:.1f}")
-            write(ws, "J10", f"{P2_corr:.4f}")
-            write(ws, "M10", f"{ΔP:.4f}")
-            write(ws, "O10", f"±{判定範囲:.4f}")
+            write(ws, "J10", f"{P2_corr:.3f}MPa")
+            write(ws, "M10", f"{ΔP:.3f}MPa")
+            write(ws, "O10", f"±{判定範囲:.3f}MPa")
             write(ws, "M11", 合否)
             write(ws, "E11", 試験実施者)
 
-            # --- ダウンロード ---
+            # --- ダウンロード処理 ---
             output = BytesIO()
             wb.save(output)
             excel_data = output.getvalue()
