@@ -5,6 +5,15 @@ from io import BytesIO
 import base64
 from decimal import Decimal, ROUND_HALF_UP
 
+# ========================================
+# ✅ Streamlitアプリの設定（←これが「方法①」）
+# ========================================
+st.set_page_config(
+    page_title="気密試験アプリ",   # ← ホーム画面やブラウザでの表示名
+    page_icon="📘",               # ← タブやインストールアイコンにも反映
+    layout="centered"             # ← 画面レイアウト（"wide"でもOK）
+)
+
 # === 設定 ===
 TEMPLATE = "気密試験記録2.xlsx"  # 同じフォルダにテンプレートExcelを置く
 
