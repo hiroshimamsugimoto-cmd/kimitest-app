@@ -5,19 +5,10 @@ from io import BytesIO
 import base64
 from decimal import Decimal, ROUND_HALF_UP
 
-# ========================================
-# ✅ Streamlitアプリ設定
-# ========================================
-st.set_page_config(
-    page_title="気密試験アプリ",
-    page_icon="📘",
-    layout="centered"
-)
-
 # === 設定 ===
-TEMPLATE = "検査報告書_(株)広島フォーマット.xlsx"  # ← アップロードされたファイル名に変更！
+TEMPLATE = "検査報告書_(株)広島フォーマット.xlsx"  # 同じフォルダにテンプレートExcelを置く
 
-# --- ExcelのROUND（0.5は常に切り上げ）---
+# --- ExcelのROUNDと同じ四捨五入（0.5は常に切り上げ）---
 def excel_round(value, digits):
     q = '1.' + '0' * digits
     return float(Decimal(str(value)).quantize(Decimal(q), rounding=ROUND_HALF_UP))
@@ -55,16 +46,16 @@ with col6:
 
 # --- 測定値入力 ---
 st.subheader("測定値入力")
-col7, col8 = st.columns(2)
-with col7:
+col5, col6 = st.columns(2)
+with col5:
     P1 = st.text_input("開始圧力 (MPa)", placeholder="例：0.8760")
-with col8:
+with col6:
     T1 = st.text_input("開始温度 (℃)", placeholder="例：20.1")
 
-col9, col10 = st.columns(2)
-with col9:
+col7, col8 = st.columns(2)
+with col7:
     P2p = st.text_input("終了圧力 (MPa)", placeholder="例：0.8756")
-with col10:
+with col8:
     T2 = st.text_input("終了温度 (℃)", placeholder="例：19.3")
 
 試験実施者 = st.text_input("試験実施者")
@@ -87,7 +78,7 @@ if st.button("判定・保存"):
         st.warning("⚠ 圧力・温度のすべてを入力してください。")
     else:
         try:
-            # --- 日時生成 ---
+            # --- 日時生成（未入力時は00:00扱い）---
             try:
                 開始日時 = datetime.combine(
                     開始日,
@@ -101,13 +92,13 @@ if st.button("判定・保存"):
                 開始日時 = datetime.combine(開始日, datetime.strptime("00:00", "%H:%M").time())
                 終了日時 = datetime.combine(終了日, datetime.strptime("00:00", "%H:%M").time())
 
-            # --- 補正後圧力 ---
+            # --- 補正後圧力（Excel式と同一）---
             T1_K = T1 + 273.15
             T2_K = T2 + 273.15
             P2_corr_raw = ((P1 + 0.1013) * (T2_K / T1_K)) - 0.1013
             P2_corr = excel_round(P2_corr_raw, 3)
 
-            # --- 判定 ---
+            # --- Excelと同じ丸め処理での判定 ---
             ΔP_dec = Decimal(str(P1)) - Decimal(str(P2_corr))
             ΔP = float(Decimal(ΔP_dec).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
             判定範囲 = float(Decimal(str(P1 * 0.01)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
@@ -115,7 +106,7 @@ if st.button("判定・保存"):
             色 = "green" if 合否 == "合格" else "red"
 
             # --- 結果表示 ---
-            st.markdown("## 📊 計算結果")
+            st.markdown("## 📊 計算結果（Excelと完全一致）")
             st.write(f"- 補正後終了圧力 P2_corr: **{P2_corr:.3f} MPa**")
             st.write(f"- 圧力変化量 ΔP（開始−補正後）: **{ΔP:.3f} MPa**")
             st.write(f"- 判定範囲: ±**{判定範囲:.3f} MPa**")
@@ -126,6 +117,7 @@ if st.button("判定・保存"):
             ws = wb["気密試験記録"]
 
             def write(ws, cell, value):
+                """結合セル対応"""
                 try:
                     ws[cell].value = value
                 except AttributeError:
@@ -133,25 +125,26 @@ if st.button("判定・保存"):
                     c = ws[cell].column
                     ws.cell(row=r, column=c, value=value)
 
-            # --- 書き込み位置（必要に応じて修正）---
-            write(ws, "C4", 系統名)
-            write(ws, "C5", 試験圧力)
-            write(ws, "I5", 試験範囲)
-            write(ws, "C6", 試験媒体)
-            write(ws, "I6", 放置時間)
-            write(ws, "C7", 使用機器No)
-            write(ws, "I7", 測定場所)
-            write(ws, "C8", 開始日時.strftime("%Y/%m/%d %H:%M"))
-            write(ws, "I8", 終了日時.strftime("%Y/%m/%d %H:%M"))
-            write(ws, "C9", f"{P1:.4f}")
-            write(ws, "E9", f"{T1:.1f}")
-            write(ws, "G9", f"{P2p:.4f}")
-            write(ws, "I9", f"{T2:.1f}")
-            write(ws, "K9", f"{P2_corr:.3f}MPa")
-            write(ws, "M9", f"{ΔP:.3f}MPa")
-            write(ws, "O9", f"±{判定範囲:.3f}MPa")
-            write(ws, "M10", 合否)
-            write(ws, "E10", 試験実施者)
+            # --- Excel書き込み ---
+            write(ws, "D3", 系統名)
+            write(ws, "D4", 試験圧力)
+            write(ws, "M4", 試験範囲)
+            write(ws, "D5", 試験媒体)
+            write(ws, "M5", 放置時間)
+            write(ws, "D6", 使用機器No)
+            write(ws, "M6", 測定場所)
+            write(ws, "D8", 開始日時.strftime("%Y/%m/%d %H:%M"))
+            write(ws, "M8", 終了日時.strftime("%Y/%m/%d %H:%M"))
+
+            write(ws, "A10", f"{P1:.4f}")
+            write(ws, "C10", f"{T1:.1f}")
+            write(ws, "E10", f"{P2p:.4f}")
+            write(ws, "G10", f"{T2:.1f}")
+            write(ws, "J10", f"{P2_corr:.3f}MPa")
+            write(ws, "M10", f"{ΔP:.3f}MPa")
+            write(ws, "O10", f"±{判定範囲:.3f}MPa")
+            write(ws, "M11", 合否)
+            write(ws, "E11", 試験実施者)
 
             # --- ダウンロード処理 ---
             output = BytesIO()
