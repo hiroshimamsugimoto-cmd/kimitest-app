@@ -106,7 +106,7 @@ if st.button("判定・保存"):
             色 = "green" if 合否 == "合格" else "red"
 
             # --- 結果表示 ---
-            st.markdown("## 📊 計算結果（Excelと完全一致）")
+            st.markdown("## 📊 計算結果")
             st.write(f"- 補正後終了圧力 P2_corr: **{P2_corr:.3f} MPa**")
             st.write(f"- 圧力変化量 ΔP（開始−補正後）: **{ΔP:.3f} MPa**")
             st.write(f"- 判定範囲: ±**{判定範囲:.3f} MPa**")
