@@ -122,28 +122,32 @@ if st.button("判定・保存"):
                 開始日時 = datetime.combine(開始日, datetime.strptime("00:00", "%H:%M").time())
                 終了日時 = datetime.combine(終了日, datetime.strptime("00:00", "%H:%M").time())
 
+
+
             # --- 補正後圧力（Excel 完全一致） ---
             P2_corr_raw = ((P1 + 0.1013) * (T2 + 273.15) / (T1 + 273.15)) - 0.1013
-            P2_corr = float(Decimal(str(P2_corr_raw)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
+            P2_corr = float(Decimal(str(P2_corr_raw)).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
 
             # --- ΔP（Excel = E10 - J10） ---
             ΔP_raw = P2p - P2_corr
-            ΔP = float(Decimal(str(ΔP_raw)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
+            ΔP = float(Decimal(str(ΔP_raw)).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
 
             # --- 判定範囲（Excel：開始圧力×1%） ---
             判定範囲_raw = P1 * 0.01
-            判定範囲 = float(Decimal(str(判定範囲_raw)).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP))
+            判定範囲 = float(Decimal(str(判定範囲_raw)).quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
 
-            # --- 判定 ---
+            # --- 合否判定 ---
             合否 = "合格" if abs(ΔP) <= 判定範囲 else "不合格"
             色 = "green" if 合否 == "合格" else "red"
 
             # --- 結果表示 ---
             st.markdown("## 📊 計算結果")
-            st.write(f"- 補正後終了圧力: **{P2_corr:.3f} MPa**")
-            st.write(f"- 圧力変化量 ΔP: **{ΔP:.3f} MPa**")
-            st.write(f"- 判定範囲: ±**{判定範囲:.3f} MPa**")
+            st.write(f"- 補正後終了圧力: **{P2_corr:.4f} MPa**")
+            st.write(f"- 圧力変化量 ΔP: **{ΔP:.4f} MPa**")
+            st.write(f"- 判定範囲: ±**{判定範囲:.4f} MPa**")
             st.markdown(f"### <span style='color:{色};'>判定: {合否}</span>", unsafe_allow_html=True)
+
+
 
             # --- 履歴保存 ---
             history.append({
@@ -184,15 +188,17 @@ if st.button("判定・保存"):
             write(ws, "M6", 測定場所)
             write(ws, "D8", 開始日時.strftime("%Y/%m/%d %H:%M"))
             write(ws, "M8", 終了日時.strftime("%Y/%m/%d %H:%M"))
-
             write(ws, "A10", f"{P1:.4f}")
             write(ws, "C10", f"{T1:.1f}")
             write(ws, "E10", f"{P2p:.4f}")
             write(ws, "G10", f"{T2:.1f}")
-            write(ws, "J10", f"{P2_corr:.3f}MPa")
-            write(ws, "M10", f"{ΔP:.3f}MPa")
-            write(ws, "O10", f"±{判定範囲:.3f}MPa")
+            write(ws, "J10", f"{P2_corr:.4f}MPa")
+            write(ws, "M10", f"{ΔP:.4f}MPa")
+            write(ws, "O10", f"±{判定範囲:.4f}MPa")
             write(ws, "M11", 合否)
+
+
+
 
             # --- 実施者欄 2 行中央揃え ---
             COMPANY_NAME = "株式会社 広島"
